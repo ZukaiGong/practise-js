@@ -8,5 +8,6 @@
   },
   "keywords": [],
   "author": "GZK",
-  "license": "ISC"
+  "license": "ISC",
+  "type": "module"
 }
