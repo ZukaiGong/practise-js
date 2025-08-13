@@ -27,6 +27,13 @@ const resolvePromise = (promise, x, resolve, reject) => {
   }
 
   let called = false; // 避免多次调用
+  // 思考：这里为什么不能直接用 x instanceof ImitatePromise 来判断 x 是否是一个 promise 对象？
+  // 因为可能 x 是一个 thenable 对象，或者是一个其他的  promise 实现的对象，
+  // 所以我们需要通过 x.then 来判断 x 是否是一个 promise 对象。
+  // 如果 x 是一个 thenable 对象，那么它的 then 方法是一个函数，我们就可以调用它。
+  // 如果 x 是一个其他的 promise 实现的对象，那么它的 then 方法也是一个函数，我们也可以调用它。
+  // 如果 x 是一个普通值，那么我们就直接 resolve(x)。
+  // 这样就可以处理各种情况了。
   if ((typeof x === "object" && x !== null) || typeof x === "function") {
     // then的返回值x是一个promise
     try {
