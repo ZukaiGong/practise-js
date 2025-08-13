@@ -22,11 +22,25 @@ const FULFILLED = "fulfilled";
 const REJECTED = "rejected";
 
 const resolvePromise = (promise, x, resolve, reject) => {
+  // 发生场景：
+  // const p = new ImitatePromise((resolve) => resolve());
+  // const p2 = p.then(() => {
+  //   return p2; // 这里返回了自己
+  // });
   if (x === promise) {
     return reject(new TypeError("Chaining cycle detected for promise"));
   }
 
+  // 根据 Promise/A+ 规范，then 方法可能会被不规范的实现或恶意代码多次调用回调（比如同时调用 resolve 和 reject，或者多次调用其中一个）。
+  // const badThenable = {
+  //   then(resolve, reject) {
+  //     resolve('first');
+  //     reject('second'); // 这里会被忽略
+  //     resolve('third'); // 这里也会被忽略
+  //   }
+  // };
   let called = false; // 避免多次调用
+
   // 思考：这里为什么不能直接用 x instanceof ImitatePromise 来判断 x 是否是一个 promise 对象？
   // 因为可能 x 是一个 thenable 对象，或者是一个其他的  promise 实现的对象，
   // 所以我们需要通过 x.then 来判断 x 是否是一个 promise 对象。
@@ -41,12 +55,14 @@ const resolvePromise = (promise, x, resolve, reject) => {
       if (typeof then === "function") {
         then.call(
           x,
+          // y 是 x resolve 的值
           (y) => {
             if (called) return;
             called = true;
             // 递归解析的过程（因为可能 promise 中还有 promise） Promise/A+ 2.3.3.3.1
             resolvePromise(promise, y, resolve, reject);
           },
+          // r 是 x reject 的值
           (r) => {
             // 只要失败就失败 Promise/A+ 2.3.3.3.2
             if (called) return;
@@ -123,6 +139,11 @@ class ImitatePromise {
       if (this.status === FULFILLED) {
         //Promise/A+ 2.2.2
         //Promise/A+ 2.2.4 --- setTimeout
+        // 在 then 方法中使用异步（如 setTimeout），是为了遵循 Promise/A+ 规范 2.2.4 的要求：
+        // 所有的回调（onFulfilled/onRejected）必须在当前执行栈清空后再执行，也就是“微任务”或“异步”执行
+        // 原因：
+        // 1.保证 then 回调总是在本轮事件循环结束后执行，而不是同步执行。
+        // 2.这样可以确保 promise 状态改变后，所有 then 注册的回调都能被正确收集和依次执行，避免同步执行时回调顺序错乱或遗漏。
         setTimeout(() => {
           try {
             //Promise/A+ 2.2.7.1
