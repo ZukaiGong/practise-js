@@ -197,6 +197,24 @@ class ImitatePromise {
       }
     });
   }
+
+  static race(promises) {
+    if (!Array.isArray(promises)) {
+      return ImitatePromise.reject(
+        new TypeError("TypeError: Argument is not iterable")
+      );
+    }
+
+    return new ImitatePromise((resolve, reject) => {
+      promises.forEach((item) => {
+        if (item && typeof item.then === "function") {
+          item.then(resolve, reject);
+        } else {
+          resolve(item);
+        }
+      });
+    });
+  }
 }
 
 ImitatePromise.prototype.catch = function (onRejected) {
