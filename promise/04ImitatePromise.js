@@ -167,6 +167,36 @@ class ImitatePromise {
       reject(reason);
     });
   }
+
+  static all(promises) {
+    if (!Array.isArray(promises)) {
+      return ImitatePromise.reject(
+        new TypeError("TypeError: Argument is not iterable")
+      );
+    }
+
+    return new ImitatePromise((resolve, reject) => {
+      const result = [];
+      let count = 0;
+
+      const processData = (index, value) => {
+        result[index] = value;
+        if (++count === promises.length) {
+          resolve(result);
+        }
+      };
+
+      for (let i = 0; i < promises.length; i++) {
+        if (promises[i] && typeof promises[i].then === "function") {
+          promises[i].then((res) => {
+            processData(i, res);
+          }, reject);
+        } else {
+          processData(i, promises[i]);
+        }
+      }
+    });
+  }
 }
 
 ImitatePromise.prototype.catch = function (onRejected) {
