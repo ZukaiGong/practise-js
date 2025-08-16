@@ -121,6 +121,11 @@ class ImitatePromise {
   }
 
   // 包含一个 then 方法，并接收两个参数 onFulfilled、onRejected
+  // 在 then 方法中使用异步（如 setTimeout），是为了遵循 Promise/A+ 规范 2.2.4 的要求：
+  // 所有的回调（onFulfilled/onRejected）必须在当前执行栈清空后再执行，也就是“微任务”或“异步”执行
+  // 原因：
+  // 1.保证 then 回调总是在本轮事件循环结束后执行，而不是同步执行。
+  // 2.这样可以确保 promise 状态改变后，所有 then 注册的回调都能被正确收集和依次执行，避免同步执行时回调顺序错乱或遗漏。
   then(onFulfilled, onRejected) {
     // 解决 onFufilled，onRejected 没有传值的问题
     // Promise/A+ 2.2.1 / Promise/A+ 2.2.5 / Promise/A+ 2.2.7.3 / Promise/A+ 2.2.7.4
@@ -139,11 +144,6 @@ class ImitatePromise {
       if (this.status === FULFILLED) {
         //Promise/A+ 2.2.2
         //Promise/A+ 2.2.4 --- setTimeout
-        // 在 then 方法中使用异步（如 setTimeout），是为了遵循 Promise/A+ 规范 2.2.4 的要求：
-        // 所有的回调（onFulfilled/onRejected）必须在当前执行栈清空后再执行，也就是“微任务”或“异步”执行
-        // 原因：
-        // 1.保证 then 回调总是在本轮事件循环结束后执行，而不是同步执行。
-        // 2.这样可以确保 promise 状态改变后，所有 then 注册的回调都能被正确收集和依次执行，避免同步执行时回调顺序错乱或遗漏。
         setTimeout(() => {
           try {
             //Promise/A+ 2.2.7.1
