@@ -169,20 +169,50 @@ class ImitatePromise {
   }
 }
 
-// test
-ImitatePromise.resolve(
-  new ImitatePromise((resolve, reject) => {
-    setTimeout(() => {
-      // resolve("hello");
-      // reject("error");
-      resolve(new Error("error"));
-    }, 1000);
-  })
-).then(
-  (res) => {
-    console.log("res", res);
-  },
-  (err) => {
-    console.log("err", err);
-  }
-);
+ImitatePromise.prototype.catch = function (onRejected) {
+  return this.then(null, onRejected);
+};
+
+// 立即返回一个新的 Promise。
+// 无论当前 promise 的状态如何，此新的 promise 在返回时始终处于待定（pending）状态。
+// 如果 onFinally 抛出错误或返回被拒绝的 promise，则新的 promise 将使用该值进行拒绝。(*)
+// 否则，新的 promise 将以与当前 promise 相同的状态敲定（settled）。
+ImitatePromise.prototype.finally = function (onFinally) {
+  return this.then(
+    (value) => {
+      return ImitatePromise.resolve(onFinally()).then(() => value);
+    },
+    (reason) => {
+      return ImitatePromise.resolve(onFinally()).then(() => {
+        throw reason;
+      });
+    }
+  );
+};
+
+// ##################   test   ###################
+
+// ImitatePromise.resolve(
+//   new ImitatePromise((resolve, reject) => {
+//     setTimeout(() => {
+//       // resolve("hello");
+//       // reject("error");
+//       resolve(new Error("error"));
+//     }, 1000);
+//   })
+// ).then(
+//   (res) => {
+//     console.log("res", res);
+//   },
+//   (err) => {
+//     console.log("err", err);
+//   }
+// );
+
+// ImitetePromise与标准Promise行为出现不同，在标准Promise中会直接抛出异常，
+// 在ImitatePromise中的异常都被捕获了
+// new ImitatePromise((resolve, reject) => {
+//   resolve("第一个值");
+// }).then((value) => {
+//   throw new Error("第二个错误");
+// });
