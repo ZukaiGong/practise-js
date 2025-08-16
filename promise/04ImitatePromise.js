@@ -161,6 +161,12 @@ class ImitatePromise {
       resolve(value);
     });
   }
+
+  static reject(reason) {
+    return new ImitatePromise((resolve, reject) => {
+      reject(reason);
+    });
+  }
 }
 
 // test
